@@ -25,66 +25,62 @@
 
 namespace rhc
 {
-  namespace detail
-  {
-    template <typename T,
-    	typename = std::enable_if_t<std::is_integral<T>::value>
-    >
-    constexpr T ceil(float number)
-	{	// Note: std::ceil is not constexpr, so own implementation here.
- 	   return (static_cast<float>(static_cast<T>(number)) == number) ?
- 	       static_cast<T>(number) : static_cast<T>(number) + ((number > 0) ? 1 : 0);
+	namespace detail
+	{
+		template <typename T,
+			typename = std::enable_if_t<std::is_integral<T>::value>
+		>
+		constexpr T ceil(float number)
+		{	// Note: std::ceil is not constexpr, so own implementation here.
+			return (static_cast<float>(static_cast<T>(number)) == number) ?
+				static_cast<T>(number) : static_cast<T>(number) + ((number > 0) ? 1 : 0);
+		}
 	}
-  }
-  
-  using std::size_t;
-  
-  template <size_t Size>
-  class bit_array
-  {
-    constexpr static size_t bits = Size;
-    constexpr static size_t bytes = detail::ceil<size_t>(static_cast<float>(bits) / CHAR_BIT);
-    std::byte storage[bytes];	// Raw backing storage.
-    
-    static constexpr size_t index_to_byte (const size_t index)
-    {	// Logical index to byte map.
-      return index/CHAR_BIT;
-    }
-    static constexpr size_t index_to_offset (const size_t index)
-    {	// Get the offset within one byte.
-    	return index - CHAR_BIT*(index/CHAR_BIT);
-    }
-        
-    public:
-    constexpr bit_array() : storage{} { ; }
-    
-    template <typename T,
-    	typename = std::enable_if_t<std::is_integral<T>::value>
-    >
-    constexpr bit_array (const T integer)
-    	: storage{*reinterpret_cast<const std::byte*>(&integer)}
-    { ; }
-    
-    constexpr bit_array (const std::initializer_list<bool>& list) : storage {}
-    {
-     	assert(list.size() <= bits);
-    	size_t index = 0;
-      	for (const auto& bit : list)
-        {
-        	storage[index_to_byte(index)] |= std::byte(bit << index_to_offset(index));
-          	++index;
-        } 
-    }
-    
-    constexpr bool operator[](const std::size_t index) const
-    {
-      return static_cast<bool>(
-       (storage[index_to_byte(index)] >> index_to_offset(index)) & std::byte(0x1)
-     );
-    }
- 
-  };
-}
+
+	using std::size_t;
+
+	template <size_t Size>
+	class bit_array
+	{
+		constexpr static size_t bits = Size;
+		constexpr static size_t bytes = detail::ceil<size_t>(static_cast<float>(bits) / CHAR_BIT);
+		std::byte storage[bytes];	// Raw backing storage.
+		
+		static constexpr size_t index_to_byte (const size_t index)
+		{	// Logical index to byte map.
+			return index/CHAR_BIT;
+		}
+		static constexpr size_t index_to_offset (const size_t index)
+		{	// Get the offset within one byte.
+			return index - CHAR_BIT*(index/CHAR_BIT);
+		}
+
+		public:
+		constexpr bit_array() : storage{} { ; }
+		template <typename T,
+			typename = std::enable_if_t<std::is_integral<T>::value>
+		>
+		constexpr bit_array (const T integer)
+			: storage{*reinterpret_cast<const std::byte*>(&integer)}
+		{ ; }
+		constexpr bit_array (const std::initializer_list<bool>& list) : storage {}
+		{
+				assert(list.size() <= bits);
+				size_t index = 0;
+				for (const auto& bit : list)
+				{
+						storage[index_to_byte(index)] |= std::byte(bit << index_to_offset(index));
+						++index;
+				}
+		}
+		constexpr bool operator[](const std::size_t index) const
+		{
+			return static_cast<bool>(
+				(storage[index_to_byte(index)] >> index_to_offset(index)) & std::byte(0x1)
+			);
+		}
+	}; // End of class bit_array.
+} // End of namespace rhc.
 
 namespace rhc::primes
 {
@@ -102,8 +98,8 @@ namespace rhc::primes
 	constexpr uint_t to_number (const index_t idx)
 	{
 		return idx*2 + 3;
-	}	
-	
+	}
+
 	template <uint_t Size>
 	using table = rhc::bit_array<Size>;
 
