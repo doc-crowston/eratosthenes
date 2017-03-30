@@ -117,11 +117,13 @@ namespace rhc::primes
 		return { static_cast<bool>(lhs[Is] | rhs[Is]) ... };
 	}
 
-	template <uint_t Size, uint_t Factor
-		//,typename = std::enable_if_t</*Factor is not on composite list*/>		 
+	template <uint_t Size, uint_t Factor,
+		std::enable_if_t<(Factor<Size)>* = nullptr
+		// typename =		//,typename = std::enable_if_t</*Factor is not on composite list*/>		 
 	>
 	struct merged_factor_table
 	{
+		constexpr static size_t MaxNumber = 2*Size;
 		constexpr static auto get()
 			-> table<Size>
 		{	
@@ -134,22 +136,25 @@ namespace rhc::primes
 		}
 	};
 
-	template <uint_t Size>
-	struct merged_factor_table<Size, Size>
+	template <uint_t Size, uint_t Factor,
+		std::enable_if_t<(Factor>=Size)>* = nullptr
+	>
+	struct merged_factor_table
 	{
+		constexpr static size_t MaxNumber = 2*Size;
 		constexpr static auto get()
 			-> table<Size>
 		{
-			return get_factor_table<Size, Size>(std::make_index_sequence<Size>());
+			return get_factor_table<Size, MaxNumber>(std::make_index_sequence<Size>());
 		}
 	};
 
-	template <size_t Size>
+	template <size_t MaxNumber>
 	constexpr bool check(const uint_t num)
 	{
-		//constexpr size_t HalfSize = Size/2;
+		constexpr size_t Size = MaxNumber/2;
 		constexpr table<Size> composites = merged_factor_table<Size, 3>::get(); 
-		if (num == 0 || num == 1) 	return false;
+		if (num == 0 || num == 1) 		return false;
 		if (num == 2)				return true;
 		if (num % 2 == 0)			return false;
 		return !composites[to_index(num)];
@@ -157,7 +162,7 @@ namespace rhc::primes
 	
 	// Arbitrary check list.
 	static_assert(!check<17>(0));
-	static_assert(!check<7 >(1));
+	/*static_assert(!check<7 >(1));
 	static_assert( check<7 >(2));
 	static_assert( check<7 >(3));
 	static_assert(!check<7 >(4));
@@ -165,11 +170,11 @@ namespace rhc::primes
 	static_assert(!check<71>(6));
 	static_assert( check<71>(7));
 	static_assert( check<71>(29));
-	static_assert(!check<71>(33));
+	static_assert(!check<71>(33));*/
 
 } // namespace rhc::primes.
 
-bool is_prime(const rhc::primes::uint_t num)
-{
-	return rhc::primes::check<257>(num);
-}
+//bool is_prime(const rhc::primes::uint_t num)
+//{
+//	return rhc::primes::check<257>(num);
+//}
