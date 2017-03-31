@@ -6,15 +6,12 @@
  * Use and redistribution is permitted under the BSD Licence available at https://opensource.org/licenses/bsd-license.php.
  *
  * Presently, this will only build with gcc-7.0.0 (experimental version) or later. To build, invoke g++ with the -std=c++17 flag.
- * Or, see it in action here: https://godbolt.org/g/eMocgO
+ * Or, see it in action here: https://is.gd/nLfRjl
  *
  * Bugs and to do:
- *  o  This is not a true implementation of Eratosthenes’ method because every factor will be checked even if it was
+ *  o  This is not yet a true implementation of Eratosthenes’ method because every factor will be checked even if it was
  *     already encountered as a multiple of a lower factor.
- *  o  Array size is twice as big as necessary since evens are omitted.
- *
  */
-
 #include <cassert>
 #include <climits>
 #include <cstddef>
