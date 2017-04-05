@@ -1,16 +1,16 @@
 /**
  * Compile-time sieve of Eratosthenes.
  *
+ * See it in action at: 
+ *
+ * Presently, this will only build with gcc-7.0.0 (experimental version) or later. To build, invoke g++ with the -std=c++17 flag.
  *
  * Copyright Dr Robert H Crowston, 2017, all rights reserved.
  * Use and redistribution is permitted under the BSD Licence available at https://opensource.org/licenses/bsd-license.php.
- *
- * Presently, this will only build with gcc-7.0.0 (experimental version) or later. To build, invoke g++ with the -std=c++17 flag.
- * Or, see it in action here: https://is.gd/nLfRjl
- *
+ * 
  * Bugs and to do:
- *  o  This is not yet a true implementation of Eratosthenes’ method because every factor will be checked even if it was
- *     already encountered as a multiple of a lower factor.
+ *   o  Check whether this use of fold expresions is really permissible.
+ *
  */
 #include <cassert>
 #include <climits>
@@ -62,14 +62,15 @@ namespace rhc
 		{ ; }
 		constexpr bit_array (const std::initializer_list<bool>& list) : storage {}
 		{
-				assert(list.size() <= bits);
-				size_t index = 0;
-				for (const auto& bit : list)
-				{
-						storage[index_to_byte(index)] |= std::byte(bit << index_to_offset(index));
-						++index;
-				}
+			assert(list.size() <= bits);
+			size_t index = 0;
+			for (const auto& bit : list)
+			{
+				storage[index_to_byte(index)] |= std::byte(bit << index_to_offset(index));
+				++index;
+			}
 		}
+		constexpr bit_array (const bit_array<Size>& ) = default;
 		constexpr bool operator[](const std::size_t index) const
 		{
 			return static_cast<bool>(
@@ -114,31 +115,35 @@ namespace rhc::primes
 		return { static_cast<bool>(lhs[Is] | rhs[Is]) ... };
 	}
 
-	template <uint_t Size, uint_t MaxFactor, uint_t Factor
-		// typename =		//,typename = std::enable_if_t</*Factor is not on composite list*/>		 
-	>
+	template <uint_t Size, uint_t MaxFactor, uint_t PresentFactor>
 	struct merged_factor_table
 	{
-		static_assert(MaxFactor == 2*Size+1);
+		//static_assert(MaxFactor == 2*Size+1);
 		constexpr static auto get()
 			-> table<Size>
 		{	
 			using Indices = std::make_index_sequence<Size>;
-			return merge_factors(
-				get_factor_table<Size, Factor>(Indices()),
-				merged_factor_table<Size, MaxFactor, Factor+2>::get(),
-				Indices()
-			);
+			constexpr auto preceding_composites = merged_factor_table<Size, MaxFactor, PresentFactor-2>::get();
+			if (preceding_composites[to_index(PresentFactor)])
+				// Known composite; skip.
+				return preceding_composites;
+			else
+				return merge_factors(
+					get_factor_table<Size, PresentFactor>(Indices()),
+					preceding_composites,
+					Indices()
+				);
 		}
 	};
 
 	template <uint_t Size, uint_t MaxFactor>
-	struct merged_factor_table<Size, MaxFactor, MaxFactor>
+	struct merged_factor_table<Size, MaxFactor, 3>
 	{
 		constexpr static auto get()
 			-> table<Size>
-		{
-			return get_factor_table<Size, MaxFactor>(std::make_index_sequence<Size>());
+		{	
+			using Indices = std::make_index_sequence<Size>;
+			return get_factor_table<Size, 3>(Indices());
 		}
 	};
 
@@ -149,7 +154,7 @@ namespace rhc::primes
 		if (num == 0 || num == 1)	return false;
 		if (num == 2)				return true;
 		if (num % 2 == 0)			return false;
-		constexpr table<Size> composites = merged_factor_table<Size, MaxNumber, 3>::get(); 
+		constexpr auto composites = merged_factor_table<Size, MaxNumber, MaxNumber>::get(); 
 		return !composites[to_index(num)];
 	}
 	
@@ -169,6 +174,6 @@ namespace rhc::primes
 
 bool is_prime(const rhc::primes::uint_t num)
 {
-	return rhc::primes::check<257>(num);
+	return rhc::primes::check<1001>(num);
 }
 
