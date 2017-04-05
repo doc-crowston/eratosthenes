@@ -9,8 +9,7 @@
  * Use and redistribution is permitted under the BSD Licence available at https://opensource.org/licenses/bsd-license.php.
  * 
  * Bugs and to do:
- *  o  This is not a true implementation of Eratosthenes’ method because every factor will be checked even if it was
- *     already encountered as a multiple of a lower factor.
+ *   o  Check whether this use of fold expresions is really permissible.
  *
  */
 
