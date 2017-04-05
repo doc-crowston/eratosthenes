@@ -72,6 +72,7 @@ namespace rhc
 				++index;
 			}
 		}
+		constexpr bit_array (const bit_array<Size>& ) = default;
 		constexpr bool operator[](const std::size_t index) const
 		{
 			return static_cast<bool>(
@@ -116,50 +117,35 @@ namespace rhc::primes
 		return { static_cast<bool>(lhs[Is] | rhs[Is]) ... };
 	}
 
-	template <uint_t Size>
-	constexpr auto next_candidate(const table<Size> composites, uint_t candidate)
-	{
-		while (to_index(candidate) < Size && composites[to_index(candidate)])
-			++candidate;
-		return candidate;
-	}
-
 	template <uint_t Size, uint_t MaxFactor, uint_t PresentFactor>
 	struct merged_factor_table
 	{
 		//static_assert(MaxFactor == 2*Size+1);
-		constexpr static auto get(const table<Size> composites_so_far)
+		constexpr static auto get()
 			-> table<Size>
 		{	
-			/*constexpr auto next_factor = [&] ()
-			{
-				uint_t candidate = PresentFactor;
-				while (to_index(candidate) < Size && composites_so_far[to_index(candidate)])
-					candidate +=2;
-				return candidate;
-			};	*/
-
 			using Indices = std::make_index_sequence<Size>;
-			return merged_factor_table<Size, MaxFactor, next_candidate(composites_so_far, PresentFactor)>::get(merge_factors(
-				composites_so_far,
-				get_factor_table<Size, PresentFactor>(Indices()),
-				Indices()
-			));
+			constexpr auto preceding_composites = merged_factor_table<Size, MaxFactor, PresentFactor-2>::get();
+			if (preceding_composites[to_index(PresentFactor)])
+				// Known composite; skip.
+				return preceding_composites;
+			else
+				return merge_factors(
+					get_factor_table<Size, PresentFactor>(Indices()),
+					preceding_composites,
+					Indices()
+				);
 		}
 	};
 
 	template <uint_t Size, uint_t MaxFactor>
-	struct merged_factor_table<Size, MaxFactor, MaxFactor>
+	struct merged_factor_table<Size, MaxFactor, 3>
 	{
-		constexpr static auto get(const table<Size> composites)
+		constexpr static auto get()
 			-> table<Size>
 		{	
 			using Indices = std::make_index_sequence<Size>;
-			return merge_factors(
-				composites,
-				get_factor_table<Size, MaxFactor>(Indices()),
-				Indices()
-			);
+			return get_factor_table<Size, 3>(Indices());
 		}
 	};
 
@@ -170,9 +156,7 @@ namespace rhc::primes
 		if (num == 0 || num == 1)	return false;
 		if (num == 2)				return true;
 		if (num % 2 == 0)			return false;
-		constexpr table<Size> composites = merged_factor_table<Size, MaxNumber, 5>::get(
-			get_factor_table<Size, 3>(std::make_index_sequence<Size>())		
-		); 
+		constexpr auto composites = merged_factor_table<Size, MaxNumber, MaxNumber>::get(); 
 		return !composites[to_index(num)];
 	}
 	
@@ -192,6 +176,6 @@ namespace rhc::primes
 
 bool is_prime(const rhc::primes::uint_t num)
 {
-	return rhc::primes::check<257>(num);
+	return rhc::primes::check<1001>(num);
 }
 
