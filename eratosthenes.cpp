@@ -1,7 +1,7 @@
 /**
  * Compile-time sieve of Eratosthenes.
  *
- * See it in action at: 
+ * See it in action at: https://is.gd/nty3jp
  *
  * Presently, this will only build with gcc-7.0.0 (experimental version) or later. To build, invoke g++ with the -std=c++17 flag.
  *
